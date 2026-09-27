@@ -8,7 +8,10 @@ export function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === 'user'
 
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
+      {!isUser && message.model && (
+        <span className="mb-1 px-1 text-[11px] text-neutral-500">{message.model}</span>
+      )}
       <div
         className={`max-w-[75%] rounded-xl px-4 py-2 text-sm ${
           isUser ? 'bg-neutral-100 text-neutral-900' : 'bg-neutral-800 text-neutral-100'

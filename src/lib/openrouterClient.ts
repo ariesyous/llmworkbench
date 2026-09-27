@@ -27,6 +27,7 @@ export interface StreamChatCompletionInput {
   messages: ChatMessageInput[]
   signal?: AbortSignal
   onToken: (token: string) => void
+  onModel?: (model: string) => void
 }
 
 export async function streamChatCompletion({
@@ -35,6 +36,7 @@ export async function streamChatCompletion({
   messages,
   signal,
   onToken,
+  onModel,
 }: StreamChatCompletionInput): Promise<void> {
   let res: Response
   try {
@@ -63,6 +65,7 @@ export async function streamChatCompletion({
     throw new OpenRouterApiError(res.status, message)
   }
 
+  let reportedModel = false
   try {
     await parseSSEStream(res, (data) => {
       if (data === '[DONE]') return
@@ -71,6 +74,10 @@ export async function streamChatCompletion({
         chunk = JSON.parse(data) as ChatCompletionChunk
       } catch {
         return
+      }
+      if (!reportedModel && chunk.model) {
+        reportedModel = true
+        onModel?.(chunk.model)
       }
       const content = chunk.choices?.[0]?.delta?.content
       if (content) onToken(content)

@@ -15,6 +15,7 @@ export function ThreadView({ thread }: { thread: Thread }) {
     apiKey: apiKeyState.apiKey,
     messages,
     setMessages,
+    onAutoTitle: (title) => void threadsState.renameThread(thread.id, title),
   })
 
   return (

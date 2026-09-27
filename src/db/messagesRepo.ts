@@ -30,7 +30,7 @@ export async function addMessage(input: {
 
 export async function updateMessage(
   id: string,
-  patch: Partial<Pick<Message, 'content' | 'error'>>,
+  patch: Partial<Pick<Message, 'content' | 'error' | 'model'>>,
 ): Promise<void> {
   const db = await getDb()
   const existing = await db.get(STORE_MESSAGES, id)

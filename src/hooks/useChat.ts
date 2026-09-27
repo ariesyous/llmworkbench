@@ -9,9 +9,18 @@ interface UseChatArgs {
   apiKey: string | null
   messages: Message[]
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>
+  onAutoTitle?: (title: string) => void
 }
 
-export function useChat({ thread, apiKey, messages, setMessages }: UseChatArgs) {
+const AUTO_TITLE_MAX_LENGTH = 48
+
+function deriveTitle(text: string): string {
+  const singleLine = text.trim().replace(/\s+/g, ' ')
+  if (singleLine.length <= AUTO_TITLE_MAX_LENGTH) return singleLine
+  return `${singleLine.slice(0, AUTO_TITLE_MAX_LENGTH - 1)}…`
+}
+
+export function useChat({ thread, apiKey, messages, setMessages, onAutoTitle }: UseChatArgs) {
   const [isStreaming, setIsStreaming] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
 
@@ -22,6 +31,10 @@ export function useChat({ thread, apiKey, messages, setMessages }: UseChatArgs) 
   const sendMessage = useCallback(
     async (text: string) => {
       if (!thread || !apiKey || !text.trim() || isStreaming) return
+
+      if (messages.length === 0 && thread.title === 'New chat') {
+        onAutoTitle?.(deriveTitle(text))
+      }
 
       const userMessage = await addMessage({
         threadId: thread.id,
@@ -49,10 +62,17 @@ export function useChat({ thread, apiKey, messages, setMessages }: UseChatArgs) 
       setIsStreaming(true)
 
       let accumulated = ''
+      let actualModel = thread.model
       const applyToken = (token: string) => {
         accumulated += token
         setMessages((prev) =>
           prev.map((m) => (m.id === assistantMessage.id ? { ...m, content: accumulated } : m)),
+        )
+      }
+      const applyModel = (model: string) => {
+        actualModel = model
+        setMessages((prev) =>
+          prev.map((m) => (m.id === assistantMessage.id ? { ...m, model } : m)),
         )
       }
 
@@ -63,20 +83,25 @@ export function useChat({ thread, apiKey, messages, setMessages }: UseChatArgs) 
           messages: history,
           signal: controller.signal,
           onToken: applyToken,
+          onModel: applyModel,
         })
-        await updateMessage(assistantMessage.id, { content: accumulated })
+        await updateMessage(assistantMessage.id, { content: accumulated, model: actualModel })
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Something went wrong'
         setMessages((prev) =>
           prev.map((m) => (m.id === assistantMessage.id ? { ...m, error: message } : m)),
         )
-        await updateMessage(assistantMessage.id, { content: accumulated, error: message })
+        await updateMessage(assistantMessage.id, {
+          content: accumulated,
+          model: actualModel,
+          error: message,
+        })
       } finally {
         setIsStreaming(false)
         abortRef.current = null
       }
     },
-    [apiKey, isStreaming, messages, setMessages, thread],
+    [apiKey, isStreaming, messages, onAutoTitle, setMessages, thread],
   )
 
   return { isStreaming, sendMessage, stopGenerating }

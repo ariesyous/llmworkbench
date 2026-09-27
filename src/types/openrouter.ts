@@ -21,6 +21,7 @@ export interface ChatCompletionChunkChoice {
 
 export interface ChatCompletionChunk {
   id?: string
+  model?: string
   choices: ChatCompletionChunkChoice[]
 }
 
