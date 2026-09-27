@@ -1,5 +1,7 @@
 # LLM Workbench
 
+**Live app: https://ariesyous.github.io/llmworkbench/**
+
 A local-only, no-backend chat UI for [OpenRouter.ai](https://openrouter.ai). Everything runs
 entirely in your browser — your API key, chat threads, and settings are stored in
 `localStorage`/IndexedDB and never touch any server other than OpenRouter's own API.
@@ -22,5 +24,4 @@ npm run dev
 ## Deployment
 
 Pushing to `main` builds the app and deploys it to GitHub Pages via
-`.github/workflows/deploy.yml`. Enable **Settings → Pages → Source: GitHub Actions** once,
-and it deploys automatically after that.
+`.github/workflows/deploy.yml`, publishing to https://ariesyous.github.io/llmworkbench/.
